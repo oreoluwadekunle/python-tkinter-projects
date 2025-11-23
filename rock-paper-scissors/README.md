@@ -71,7 +71,7 @@ Possible enhancements:
 ## Screenshots
 
 ### Start Screen
-![Start Screen](screenshots/rps_start-screen.png)
+![Start Screen](screenshots/rps_startscreen.png)
 
 ### Gameplay
 ![Gameplay](screenshots/rps_gameplay.png)
@@ -81,5 +81,5 @@ Possible enhancements:
 
 ## Author
 
-Adekunle Oreoluwa
+Adekunle Oreoluwa,
 Created while learning Tkinter GUI programming.
