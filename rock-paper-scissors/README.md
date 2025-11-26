@@ -38,7 +38,7 @@ This is a GUI-based implementation of the classic rock-paper-scissors game where
 
 ## Prerequisites
 
-- Python 3 installed on your Mac
+- Python 3 installed on your Mac or Windows
 - Git installed (comes pre-installed on most Macs)
 
 ## First Time Setup (Mac) and (Windows)
