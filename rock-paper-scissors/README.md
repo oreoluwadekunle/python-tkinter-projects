@@ -4,7 +4,7 @@ A graphical rock-paper-scissors game built with Python and Tkinter.
 
 ## Description
 
-This is a GUI-based implementation of the classic rock-paper-scissors game where you play against the computer. The game tracks your score across 5 rounds and declares an overall winner at the end.
+This is a GUI-based implementation of the classic rock-paper-scissors game where you play against the computer. The game tracks your score across a number of  rounds and declares an overall winner at the end.
 
 ## Features
 
@@ -24,7 +24,7 @@ This is a GUI-based implementation of the classic rock-paper-scissors game where
 2. Click one of the three buttons: 🪨 Rock, 📄 Paper, or ✂️ Scissors
 3. The computer makes its choice randomly
 4. Results are displayed immediately
-5. Play continues for 5 rounds
+5. Play continues for set rounds
 6. After set rounds, an overall winner is declared
 7. Click "Play Again" to start a new game
 
@@ -70,10 +70,6 @@ cd  rock-paper-scissors
 #### For Mac
 ```bash
 chmod +x run_game.command
-```
-#### For Windows
-```bash
- run_game.bat
 ```
 
 ### Step 6: Close Terminal
