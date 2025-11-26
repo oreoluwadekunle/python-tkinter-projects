@@ -63,11 +63,17 @@ git clone https://github.com/oreoluwadekunle/python-tkinter-projects.git
 ### Step 4: Enter the game folder
 ```bash
 cd  python-tkinter-projects
+cd  rock-paper-scissors
 ```
 
 ### Step 5: Make the launcher executable
+#### For Mac
 ```bash
 chmod +x run_game.command
+```
+#### For Windows
+```bash
+ run_game.bat
 ```
 
 ### Step 6: Close Terminal
