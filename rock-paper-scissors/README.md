@@ -41,13 +41,13 @@ This is a GUI-based implementation of the classic rock-paper-scissors game where
 - Python 3 installed on your Mac
 - Git installed (comes pre-installed on most Macs)
 
-## First Time Setup (Mac)
+## First Time Setup (Mac) and (Windows)
 
 Follow these steps once to get the game running:
 
 ### Step 1: Open Terminal
-- Press `Command + Space`
-- Type "Terminal" and press Enter
+- Press `Command + Space` for mac or `windows + R` for windows
+- Type "Terminal" for mac or "cmd" for windows and press Enter
 
 ### Step 2: Navigate to where you want the game
 ```bash
@@ -71,6 +71,10 @@ cd  rock-paper-scissors
 ```bash
 chmod +x run_game.command
 ```
+#### For Windows
+```bash
+ run_game.bat
+```
 
 ### Step 6: Close Terminal
 You're done with Terminal! You'll never need it again.
@@ -79,7 +83,7 @@ You're done with Terminal! You'll never need it again.
 
 ## How to Start
 
-Simply **double-click `run_game.command`** to start the game!
+Simply **double-click `run_game.command` or `run_game.bat`** to start the game!
 
 **First time only:** macOS may ask "Are you sure you want to open this?" - click "Open"
 
@@ -90,14 +94,14 @@ The launcher will automatically:
 
 ## Updates
 
-When I update the game, you don't need to do anything special! Just double-click `run_game.command` as usual, and it will automatically download the latest version before running.
+When I update the game, you don't need to do anything special! Just double-click `run_game.command` or `run_game.bat` as usual, and it will automatically download the latest version before running.
 
 ## Troubleshooting
 
 If the game doesn't start:
 1. Make sure Python 3 is installed: Open Terminal and type `python3 --version`
-2. Make sure you ran `chmod +x run_game.command` in the setup
-3. Try right-clicking `run_game.command` and selecting "Open"
+2. Make sure you ran `chmod +x run_game.command`or `run_game.bat` in the setup
+3. Try right-clicking `run_game.command` or `run_game.bat` and selecting "Open"
 
 ---
 
