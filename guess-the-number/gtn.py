@@ -3,12 +3,44 @@ from tkinter import ttk
 import random
 import time
 import pygame
+import json
+import os
+
+pygame.init()
+# Sound setup
+sound_name=r"C:\Users\USER\Desktop\MyProjects\python-tkinter-projects\guess-the-number\stand_up.mp3"
+BGM2 = r"C:\Users\USER\Desktop\MyProjects\python-tkinter-projects\guess-the-number\BGM2.mp3"
+BGM1 = r"C:\Users\USER\Desktop\MyProjects\python-tkinter-projects\guess-the-number\BGM1.mp3"
+
+# Define your playlist and current song index
+PLAYLIST = [BGM1, BGM2]
+current_track_index = 0
+
+# Define a custom event ID
+# This event will be triggered by Pygame when a track finishes.
+MUSIC_END_EVENT = pygame.USEREVENT + 1
 
 # Initialize pygame mixer for sound
 pygame.mixer.init()
+pygame.mixer.music.set_endevent(MUSIC_END_EVENT)
 
-sound_name=r"C:\Users\USER\Desktop\MyProjects\python-tkinter-projects\guess-the-number\stand_up.mp3"
 
+try:
+    # Load the music file (must be done with mixer.music.load)
+    pygame.mixer.music.load(PLAYLIST[current_track_index])
+    
+    # Play the music. The -1 means it will loop indefinitely.
+    # The 0.0 means start playing immediately.
+    pygame.mixer.music.play(0) 
+    
+    # Optional: Set volume (0.0 to 1.0)
+    pygame.mixer.music.set_volume(0.5) 
+    
+    print(f"✓ Background music started.")
+
+except pygame.error as e:
+    print(f"⚠ Could not load background music: {e}")
+    
 # Load the sound file (change filename if yours is different)
 try:
     win_sound = pygame.mixer.Sound(sound_name)  # Change to your filename
@@ -25,17 +57,20 @@ window.config(bg="#2C3E50")
 window.minsize(500,500)
 window.resizable(True, True)
 
+
 # Create a Notebook (tab container)
 notebook = ttk.Notebook(window)
-notebook.pack(fill="both", expand=True, padx=10, pady=10)
+notebook.pack(fill="both", expand=True, padx=10, pady=5)
 
 # Create two frames - one for each tab
 settings_tab = tk.Frame(notebook, bg="#2C3E50")
 game_tab = tk.Frame(notebook, bg="#2C3E50")
+leaderboard_tab = tk.Frame(notebook, bg="#2C3E50")
 
 # Add frames as tabs
 notebook.add(settings_tab, text="⚙️ Settings")
 notebook.add(game_tab, text="🎮 Game")
+notebook.add(leaderboard_tab, text="🏆 Leaderboard")
 
 # Initialize game variables
 secret_number = 0
@@ -51,8 +86,156 @@ guess_history=[]
 guessed_after_hint = True  # Track if player guessed after last hint
 start_time = 0  # Track when game started
 score = 0  # Player's score
+Global_elapsed_time = 0
 
+# Separate leaderboards for each difficulty
+leaderboards = {
+    "Easy": [],
+    "Medium": [],
+    "Hard": [],
+    "Custom": []
+}
 
+# File to save leaderboard
+LEADERBOARD_FILE = "leaderboard.json"
+
+#
+def play_next_track():
+    global current_track_index
+    
+    # Calculate the index of the next song, wrapping around the playlist
+    current_track_index = (current_track_index + 1) % len(PLAYLIST)
+    
+    # Get the file name
+    next_track = PLAYLIST[current_track_index]
+    
+    try:
+        # Load the next track
+        pygame.mixer.music.load(next_track)
+        
+        # Start playing (0 means play once)
+        pygame.mixer.music.play(0) 
+        
+        print(f"Now playing: {next_track}")
+    except pygame.error as e:
+        print(f"Error loading {next_track}: {e}")
+
+def check_pygame_events(window):
+    # Process all events in the Pygame queue
+    for event in pygame.event.get():
+        
+        # Check if the event is the one we defined (song ended)
+        if event.type == MUSIC_END_EVENT:
+            play_next_track()
+            
+    # Schedule this function to run again after a small delay (e.g., 100ms)
+    window.after(100, check_pygame_events, window)
+
+window.after(100, check_pygame_events, window)
+    
+# Load leaderboards from file
+def load_leaderboards():
+    global leaderboards
+    if os.path.exists(LEADERBOARD_FILE):
+        try:
+            with open(LEADERBOARD_FILE, 'r') as f:
+                leaderboards = json.load(f)
+            # Ensure all difficulty keys exist
+            for difficulty in ["Easy", "Medium", "Hard", "Custom"]:
+                if difficulty not in leaderboards:
+                    leaderboards[difficulty] = []
+            print(f"✓ Loaded leaderboards")
+        except:
+            leaderboards = {"Easy": [], "Medium": [], "Hard": [], "Custom": []}
+            print("⚠ Could not load leaderboards, starting fresh")
+    else:
+        leaderboards = {"Easy": [], "Medium": [], "Hard": [], "Custom": []}
+        print("ℹ No leaderboard file found, starting fresh")
+        save_leaderboards()
+
+# Save leaderboard to file
+def save_leaderboards():
+    try:
+        # Write leaderboard to JSON file
+        with open(LEADERBOARD_FILE, 'w') as f:
+            json.dump(leaderboards, f, indent=2)
+        print("✓ Leaderboards saved")
+    except:
+        print("⚠ Could not save leaderboards")
+
+# Add score to appropriate leaderboard
+def add_to_leaderboard(player_name, score, time_taken, difficulty):
+    entry = {
+        "name": player_name,
+        "score": score,
+        "time": time_taken
+    }
+    
+    # Add to the appropriate difficulty leaderboard
+    leaderboards[difficulty].append(entry)
+    
+    # Sort by score (highest first)
+    leaderboards[difficulty].sort(key=lambda x: x["score"], reverse=True)
+    
+    # Keep only top 10 for this difficulty
+    leaderboards[difficulty] = leaderboards[difficulty][:9]
+    
+    save_leaderboards()
+    update_leaderboard_display()
+
+# Update leaderboard display based on selected difficulty
+def update_leaderboard_display():
+    # Get selected difficulty from dropdown
+    selected_difficulty = difficulty_var.get()
+    
+    # Clear existing content
+    for widget in leaderboard_content_frame.winfo_children():
+        widget.destroy()
+    
+    # Get leaderboard for selected difficulty
+    current_leaderboard = leaderboards[selected_difficulty]
+    
+    if not current_leaderboard:
+        no_scores = tk.Label(leaderboard_content_frame, 
+                            text=f"No {selected_difficulty} scores yet!\nBe the first to set a record!",
+                            font=("Arial", 14), bg="#2C3E50", fg="#7F8C8D",
+                            justify=tk.CENTER)
+        no_scores.pack(pady=50)
+    else:
+        for i, entry in enumerate(current_leaderboard, 1):
+            entry_frame = tk.Frame(leaderboard_content_frame, bg="#34495E", 
+                                  relief=tk.RAISED, bd=2)
+            entry_frame.pack(pady=2, padx=10, fill=tk.X)
+
+            # Rank with medals
+            if i == 1:
+                rank = "🥇"
+            elif i == 2:
+                rank = "🥈"
+            elif i == 3:
+                rank = "🥉"
+            else:
+                rank = f"{i}."
+            
+            rank_label = tk.Label(entry_frame, text=rank, font=("Arial", 16, "bold"),
+                                 bg="#34495E", fg="white", width=3)
+            rank_label.pack(side=tk.LEFT, padx=5)
+            
+            info_frame = tk.Frame(entry_frame, bg="#34495E")
+            info_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=10, pady=3)
+            
+            name_label = tk.Label(info_frame, text=entry["name"], 
+                                 font=("Arial", 12, "bold"),
+                                 bg="#34495E", fg="white", anchor="w")
+            name_label.pack(anchor="w")
+
+            details = f"Score: {entry['score']} | Time: {entry['time']}s"
+            details_label = tk.Label(info_frame, text=details,
+                                   font=("Arial", 9), bg="#34495E", fg="#BDC3C7",
+                                   anchor="w")
+            details_label.pack(anchor="w")
+
+load_leaderboards()
 
 # Title for settings
 settings_title = tk.Label(settings_tab, text="Game Settings", 
@@ -67,7 +250,95 @@ difficulty_title = tk.Label(difficulty_frame, text="Quick Presets:",
                            font=("Arial", 12, "bold"), bg="#2C3E50", fg="white")
 difficulty_title.pack(pady=5)
 
+# ==================== LEADERBOARD TAB ====================
 
+leaderboard_header = tk.Frame(leaderboard_tab, bg="#2C3E50")
+leaderboard_header.pack(pady=20, fill=tk.X)
+
+leaderboard_title = tk.Label(leaderboard_header, text="🏆 High Scores", 
+                            font=("Arial", 20, "bold"), bg="#2C3E50", fg="#F39C12")
+leaderboard_title.pack()
+
+# Difficulty selector frame
+selector_frame = tk.Frame(leaderboard_header, bg="#2C3E50")
+selector_frame.pack(pady=10)
+
+difficulty_label = tk.Label(selector_frame, text="Difficulty:", 
+                           font=("Arial", 12), bg="#2C3E50", fg="white")
+difficulty_label.pack(side=tk.LEFT, padx=5)
+
+# Dropdown for difficulty selection
+difficulty_var = tk.StringVar(value="Medium")  # Default to Medium
+
+# Create styled dropdown
+difficulty_dropdown = ttk.Combobox(selector_frame, textvariable=difficulty_var,
+                                  values=["Easy", "Medium", "Hard", "Custom"],
+                                  state="readonly", width=12, font=("Arial", 11))
+difficulty_dropdown.pack(side=tk.LEFT, padx=5)
+
+# Update display when dropdown changes
+difficulty_dropdown.bind("<<ComboboxSelected>>", lambda e: update_leaderboard_display())
+
+# Scrollable frame for leaderboard entries
+leaderboard_canvas = tk.Canvas(leaderboard_tab, bg="#2C3E50", highlightthickness=0)
+leaderboard_scrollbar = tk.Scrollbar(leaderboard_tab, orient="vertical", 
+                                    command=leaderboard_canvas.yview)
+leaderboard_content_frame = tk.Frame(leaderboard_canvas, bg="#2C3E50")
+
+leaderboard_content_frame.bind(
+    "<Configure>",
+    lambda e: leaderboard_canvas.configure(scrollregion=leaderboard_canvas.bbox("all"))
+)
+
+leaderboard_canvas.create_window((0, 0), window=leaderboard_content_frame, anchor="nw")
+leaderboard_canvas.configure(yscrollcommand=leaderboard_scrollbar.set)
+
+leaderboard_canvas.pack(side="left", fill="both", expand=True, padx=10)
+leaderboard_scrollbar.pack(side="right", fill="y")
+
+# Clear leaderboard button (clears selected difficulty only)
+def clear_leaderboard():
+    selected_difficulty = difficulty_var.get()
+    
+    confirm_window = tk.Toplevel(window)
+    confirm_window.title("Confirm")
+    confirm_window.geometry("300x120")
+    confirm_window.config(bg="#E74C3C")
+    confirm_window.grab_set()
+    
+    confirm_label = tk.Label(confirm_window, 
+                            text=f"Clear all {selected_difficulty} scores?\nThis cannot be undone!",
+                            font=("Arial", 11, "bold"), bg="#E74C3C", fg="white",
+                            justify=tk.CENTER)
+    confirm_label.pack(pady=15)
+
+    def do_clear():
+        leaderboards[selected_difficulty] = []
+        save_leaderboards()
+        update_leaderboard_display()
+        confirm_window.destroy()
+    
+    button_frame = tk.Frame(confirm_window, bg="#E74C3C")
+    button_frame.pack(pady=10)
+    
+    yes_btn = tk.Button(button_frame, text="Yes, Clear", command=do_clear,
+                       font=("Arial", 10, "bold"), bg="#C0392B", fg="white",
+                       width=10)
+    yes_btn.pack(side=tk.LEFT, padx=5)
+    
+    no_btn = tk.Button(button_frame, text="Cancel", command=confirm_window.destroy,
+                      font=("Arial", 10), bg="#95A5A6", fg="white",
+                      width=10)
+    no_btn.pack(side=tk.LEFT, padx=5)
+
+clear_button = tk.Button(leaderboard_tab, text="Clear Selected Difficulty", 
+                        command=clear_leaderboard,
+                        font=("Arial", 10), bg="#E74C3C", fg="white",
+                        activebackground="#C0392B")
+#clear_button.pack(pady=10)
+
+# Initial display
+update_leaderboard_display()
 
 # Function to set difficulty preset
 def set_difficulty(level):
@@ -172,20 +443,38 @@ settings_feedback = tk.Label(settings_tab, text="", font=("Arial", 11),
                             bg="#2C3E50", fg="orange")
 settings_feedback.pack(pady=10)
 
+# ==================== GAME TAB ====================
 
+# Create main container with 3 columns
+main_game_container = tk.Frame(game_tab, bg="#2C3E50")
+main_game_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+# Left frame - for play again button
+left_frame = tk.Frame(main_game_container, bg="#2C3E50", width=150)
+left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+left_frame.pack_propagate(False)  # Prevents frame from shrinking
+
+# Center frame - main game area
+center_frame = tk.Frame(main_game_container, bg="#2C3E50")
+center_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+
+# Right frame - for hint display
+right_frame = tk.Frame(main_game_container, bg="#2C3E50", width=200)
+right_frame.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+right_frame.pack_propagate(False)  # Prevents frame from shrinking
 
 # Display label
-display_label = tk.Label(game_tab, text="", font=("Arial", 24, "bold"),
+display_label = tk.Label(center_frame, text="", font=("Arial", 24, "bold"),
                         bg="#34495E", fg="white", height=2)
 display_label.pack(pady=20, padx=20, fill=tk.X)
 
 # Result label
-result_label = tk.Label(game_tab, text="Configure settings and click Start Game", 
+result_label = tk.Label(center_frame, text="Configure settings and click Start Game", 
                        font=("Arial", 12), bg="#2C3E50", fg="white")
 result_label.pack(pady=10)
 
 # Info frame for attempts, hints, timer, score
-info_frame = tk.Frame(game_tab, bg="#2C3E50")
+info_frame = tk.Frame(center_frame, bg="#2C3E50")
 info_frame.pack(pady=5)
 
 attempts_label = tk.Label(info_frame, text="Attempts: 0/10 | Hints: 0", 
@@ -201,9 +490,9 @@ score_label = tk.Label(info_frame, text="Score: 0",
 score_label.pack()
 
 # Hint label (hidden by default)
-hint_label = tk.Label(game_tab, text="", 
+hint_label = tk.Label(right_frame, text="", 
                      font=("Arial", 10), bg="#EC4710", fg="white",
-                     justify=tk.LEFT, padx=10, pady=10, wraplength=400,)
+                      padx=10, pady=10,relief=tk.RAISED,wraplength=180, bd=2)
 # Function to start the game with settings
 def start_game():
     global secret_number, min_range, max_range, max_attempts, attempts, game_started, game_over,start_time, hints_used, guess_history, guessed_after_hint, score
@@ -288,9 +577,11 @@ def update_timer():
 
 def calculate_score():
     # Calculate score based on attempts, hints, and time
-    global score
+    global score, Global_elapsed_time
     
     elapsed_time = int(time.time() - start_time)
+
+    Global_elapsed_time = elapsed_time
     
     # Base score starts at 1000
     score = 1000
@@ -302,13 +593,14 @@ def calculate_score():
     score -= hints_used * 100
     
     # Deduct points for time (1 point per second)
-    #score -= elapsed_time
+    score -= elapsed_time
     
     # Make sure score doesn't go negative
     if score < 0:
         score = 0
     
     score_label.config(text=f"Score: {score}")
+    return elapsed_time
 
 def show_hint():
     global hints_used, guess_history, guessed_after_hint
@@ -371,10 +663,10 @@ def show_hint():
         else:
             hint_text += "Make some guesses first!"
     hint_label.config(text=hint_text)
-    hint_label.pack(after=info_frame, pady=10, padx=5, side=tk.LEFT)
+    hint_label.pack( pady=10, padx=5, expand=True)
 
 # Hint button
-hint_button = tk.Button(game_tab, text="💡 Get Hint", 
+hint_button = tk.Button(center_frame, text="💡 Get Hint", 
                        command=show_hint,
                        font=("Arial", 11, "bold"),
                        bg="#16A085",
@@ -410,6 +702,45 @@ def clear_input():
     #result_label.config(text="Guess a number between 1-100")  # Reset result message
 
 # Function to check the guess when Enter is pressed
+
+def ask_player_name(difficulty):
+    name_popup = tk.Toplevel(window)
+    name_popup.title("New Score!")
+    name_popup.geometry("300x150")
+    name_popup.config(bg="#2C3E50")
+    name_popup.grab_set()
+    
+    title = tk.Label(name_popup, text=f"🎉 {difficulty} Mode High Score!", 
+                    font=("Arial", 13, "bold"), bg="#2C3E50", fg="#F39C12")
+    title.pack(pady=15)
+    
+    name_entry = tk.Entry(name_popup, font=("Arial", 12), width=20)
+    name_entry.pack(pady=10)
+    name_entry.focus()
+
+    def submit_name():
+        player_name = name_entry.get().strip()
+        if not player_name:
+            player_name = "Anonymous"
+        
+        final_score_time = Global_elapsed_time
+        add_to_leaderboard(player_name, score, final_score_time, difficulty)
+        name_popup.destroy()
+        
+        win_sound.stop()
+        pygame.mixer.music.unpause()
+        notebook.select(2)  # Switch to leaderboard tab
+    
+    submit_btn = tk.Button(name_popup, text="Submit", command=submit_name,
+                          font=("Arial", 12, "bold"), bg="#2ECC71", fg="white",
+                          width=10, activebackground="#27AE60")
+    submit_btn.pack(pady=10)
+    
+    name_entry.bind("<Return>", lambda e: submit_name())
+
+        
+
+
 def check_guess():
     global current_input, attempts, game_over, guess_history
 
@@ -473,7 +804,22 @@ def check_guess():
         game_over = True
         display_label.config(bg="#2ECC71")  # Green for correct
         result_label.config(text=f"🎉 Correct! You guessed it in {attempts} attempts!", fg="#2ECC71")
-        play_again_button.pack(pady=10,after=info_frame, side=tk.RIGHT)
+
+        # Determine difficulty for leaderboard
+        if min_range == 1 and max_range == 50 and max_attempts == 15:
+            difficulty = "Easy"
+        elif min_range == 1 and max_range == 100 and max_attempts == 10:
+            difficulty = "Medium"
+        elif min_range == 1 and max_range == 500 and max_attempts == 12:
+            difficulty = "Hard"
+        else:
+            difficulty = "Custom"
+
+        window.after(500, lambda: ask_player_name(difficulty))
+
+        pygame.mixer.music.pause()
+
+        play_again_button.pack(expand=True, padx=10,)
 
         
         # Play victory sound!
@@ -531,11 +877,12 @@ def reset_game():
     play_again_button.pack_forget()
 
     win_sound.stop()  # Stop sound if playing
+    pygame.mixer.music.unpause()
 
     # Switch back to settings tab
     notebook.select(0)
     
-number_frame= tk.Frame(game_tab,bg="#1681ED")
+number_frame= tk.Frame(center_frame,bg="#1681ED")
 number_frame.pack(pady=20)
 
 button_style ={
@@ -558,6 +905,22 @@ for i in range(9):
 
 btn_0 = tk.Button(number_frame,text="0", command=lambda: button_click(0),**button_style)
 btn_0.grid(row=3, column=1, padx=5, pady=5)
+
+# Bind number keys using a loop
+for num in range(10):  # 0-9
+    window.bind(str(num), lambda e, n=num: button_click(n))
+
+# Bind keypad numbers (on numeric keypad)
+for num in range(10):
+    window.bind(f'<KP_{num}>', lambda e, n=num: button_click(n))
+
+# Bind Enter key
+window.bind('<Return>', lambda e: check_guess())
+window.bind('<KP_Enter>', lambda e: check_guess())  # Keypad Enter
+
+# Bind Backspace to clear
+window.bind('<BackSpace>', lambda e: clear_input())
+window.bind('<Delete>', lambda e: clear_input())
 
 # Clear button (bottom left)
 btn_clear = tk.Button(number_frame, text="C", 
@@ -582,16 +945,20 @@ btn_enter = tk.Button(number_frame, text="↵",
 btn_enter.grid(row=3, column=2, padx=5, pady=5)
 
 # Play Again button (hidden initially)
-play_again_button = tk.Button(game_tab, text="Play Again", 
+play_again_button = tk.Button(left_frame, text="Play Again", 
                              command=reset_game,
                              font=("Arial", 14, "bold"),
                              bg="#F39C12",
                              fg="white",
                              width=15,
                              height=1,
-                             activebackground="#E67E22")
+                             activebackground="#E67E22",)
+                             
 
 
 
+# creator label at the bottom
+creator_label= tk.Label(window,text="Created by Adekunle Oreoluwa", font=("Arial", 8), bg="#2C3E50", fg="white")
+creator_label.pack(side=tk.BOTTOM, pady=0)
 
 window.mainloop()
