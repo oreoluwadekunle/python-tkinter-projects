@@ -6,6 +6,10 @@ import pygame
 import json
 import os
 
+
+GAME_VERSION = "1.0.0"
+
+
 pygame.init()
 # Sound setup
 sound_name=r"C:\Users\USER\Desktop\MyProjects\python-tkinter-projects\guess-the-number\stand_up.mp3"
