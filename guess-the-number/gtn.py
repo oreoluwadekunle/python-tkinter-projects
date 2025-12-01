@@ -5,10 +5,52 @@ import time
 import pygame
 import json
 import os
-
+import threading
+import requests
+import webbrowser
+from tkinter import messagebox
 
 GAME_VERSION = "1.0.0"
 
+# Global constant for the check
+REMOTE_VERSION_URL = "YOUR_RAW_TEXT_URL_HERE"
+DOWNLOAD_LINK = "YOUR_GAME_DOWNLOAD_URL_HERE"
+
+def check_for_updates(window_root):
+    """Starts a thread to check for updates asynchronously."""
+    update_thread = threading.Thread(target=_fetch_version_data, args=(window_root,), daemon=True)
+    update_thread.start()
+
+def _fetch_version_data(window_root):
+    """Worker function to fetch data and compare versions."""
+    try:
+        # 1. Fetch the remote version number
+        response = requests.get(REMOTE_VERSION_URL, timeout=5)
+        response.raise_for_status() # Raise an exception for bad status codes
+        
+        remote_version = response.text.strip()
+        # 2. Compare versions
+        if remote_version and remote_version > GAME_VERSION:
+            # An update is available! Schedule the notification on the main Tkinter thread.
+            window_root.after(0, lambda: _show_update_notification(remote_version))
+
+    except requests.exceptions.RequestException as e:
+        # Handle connection errors (no internet, URL down, etc.)
+        print(f"Update check failed: {e}")
+    
+    # Note: If versions are the same or the remote version is unreadable, nothing happens.
+
+def _show_update_notification(new_version):
+    """Displays the notification box on the main thread."""
+    messagebox.showinfo(
+        "Game Update Available!",
+        f"A new version ({new_version}) is available!\n"
+        f"You are currently running version {GAME_VERSION}.\n\n"
+        "Click OK to get the download link."
+    )
+    # Open the user's web browser to the download link
+    import webbrowser
+    webbrowser.open_new(DOWNLOAD_LINK)
 
 pygame.init()
 # Sound setup
@@ -61,6 +103,8 @@ window.config(bg="#2C3E50")
 window.minsize(500,500)
 window.resizable(True, True)
 
+# Start the non-blocking update check
+check_for_updates(window)
 
 # Create a Notebook (tab container)
 notebook = ttk.Notebook(window)
