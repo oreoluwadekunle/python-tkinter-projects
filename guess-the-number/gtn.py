@@ -7,7 +7,6 @@ import json
 import os
 import threading
 import requests
-import webbrowser
 from tkinter import messagebox
 
 GAME_VERSION = "1.0.0"
