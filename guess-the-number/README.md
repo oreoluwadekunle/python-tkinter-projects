@@ -48,13 +48,14 @@ pip install pygame
 ## Files
 
 - `gtn.py` - Original single-player version
-- `gtn_multiplayer.py` - Single-player + Multiplayer version (recommended)
 - `leaderboard.json` - Stores high scores data
+- `game_history.json` - Stores all scores data
+- `streak.json` - Stores player's winning streaks
 
 ## Running the Game
 
 ```bash
-python gtn_multiplayer.py
+python gtn.py
 ```
 
 Or double-click `run_game.bat` (Windows) or `run_game.command` (macOS)
