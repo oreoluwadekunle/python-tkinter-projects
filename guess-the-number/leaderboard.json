@@ -1,6 +1,95 @@
 {
-  "Easy": [],
-  "Medium": [],
-  "Hard": [],
-  "Custom": []
+  "Easy": [
+    {
+      "name": "Gaara",
+      "score": 948,
+      "time": 2
+    },
+    {
+      "name": "Gaara",
+      "score": 946,
+      "time": 4
+    },
+    {
+      "name": "Gaara",
+      "score": 896,
+      "time": 4
+    },
+    {
+      "name": "Gaara",
+      "score": 895,
+      "time": 5
+    },
+    {
+      "name": "Gaara",
+      "score": 847,
+      "time": 3
+    },
+    {
+      "name": "Gaara",
+      "score": 842,
+      "time": 0
+    },
+    {
+      "name": "Gaara",
+      "score": 841,
+      "time": 9
+    },
+    {
+      "name": "Gaara",
+      "score": 841,
+      "time": 9
+    },
+    {
+      "name": "Gaara",
+      "score": 836,
+      "time": 14
+    }
+  ],
+  "Medium": [
+    {
+      "name": "Gaara",
+      "score": 737,
+      "time": 13
+    },
+    {
+      "name": "Gaara",
+      "score": 622,
+      "time": 28
+    },
+    {
+      "name": "Gaara",
+      "score": 618,
+      "time": 32
+    },
+    {
+      "name": "Gaara",
+      "score": 581,
+      "time": 19
+    }
+  ],
+  "Hard": [
+    {
+      "name": "Gaara",
+      "score": 791,
+      "time": 9
+    },
+    {
+      "name": "Gaara",
+      "score": 730,
+      "time": 20
+    },
+    {
+      "name": "Gaara",
+      "score": 523,
+      "time": 27
+    }
+  ],
+  "Custom": [
+    {
+      "name": "mikelz",
+      "score": 947,
+      "time": 3
+    }
+  ]
 }
