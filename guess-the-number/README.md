@@ -1,4 +1,6 @@
-# Guess the number
+# 🎮 Guess The Number
+
+[Download Latest Version](https://github.com/oreoluwadekunle/python-tkinter-projects/releases/latest)
 
 A Python Tkinter-based number guessing game with single-player and multiplayer modes.
 
