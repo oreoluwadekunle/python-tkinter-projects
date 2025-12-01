@@ -8,11 +8,16 @@ import os
 import threading
 import requests
 from tkinter import messagebox
+import sys
+import re
+import csv
+from datetime import datetime
+from pathlib import Path
 
 GAME_VERSION = "1.0.0"
 
 # Global constant for the check
-REMOTE_VERSION_URL = "YOUR_RAW_TEXT_URL_HERE"
+REMOTE_VERSION_URL = "https://raw.githubusercontent.com/oreoluwadekunle/python-tkinter-projects/refs/heads/main/latest_version.txt"
 DOWNLOAD_LINK = "YOUR_GAME_DOWNLOAD_URL_HERE"
 
 def check_for_updates(window):
@@ -145,15 +150,23 @@ leaderboards = {
     "Custom": []
 }
 
-# File to save leaderboard
-LEADERBOARD_FILE = "leaderboard.json"
+# Determine script directory (works for both .py and .exe)
+if getattr(sys, 'frozen', False):
+    # Running as compiled .exe (PyInstaller)
+    SCRIPT_DIR = Path(sys.executable).parent
+else:
+    # Running as .py script
+    SCRIPT_DIR = Path(__file__).parent
+
+# File to save leaderboard (relative to script directory)
+LEADERBOARD_FILE = SCRIPT_DIR / "leaderboard.json"
 
 # Streak tracking
 current_streak = 0
 best_streak = 0
-STREAK_FILE = "streak.json"
+STREAK_FILE = SCRIPT_DIR / "streak.json"
 # Game history (records every finished game)
-GAME_HISTORY_FILE = "game_history.json"
+GAME_HISTORY_FILE = SCRIPT_DIR / "game_history.json"
 game_history = []
 
 #
@@ -193,7 +206,7 @@ window.after(100, check_pygame_events, window)
 # Load leaderboards from file
 def load_leaderboards():
     global leaderboards
-    if os.path.exists(LEADERBOARD_FILE):
+    if LEADERBOARD_FILE.exists():
         try:
             with open(LEADERBOARD_FILE, 'r') as f:
                 leaderboards = json.load(f)
@@ -229,7 +242,7 @@ def save_leaderboards():
 # Load streak data from file
 def load_streak():
     global current_streak, best_streak
-    if os.path.exists(STREAK_FILE):
+    if STREAK_FILE.exists():
         try:
             with open(STREAK_FILE, 'r') as f:
                 data = json.load(f)
@@ -263,7 +276,7 @@ def save_streak():
 # ------------------ Game history helpers ------------------
 def load_game_history():
     global game_history
-    if os.path.exists(GAME_HISTORY_FILE):
+    if GAME_HISTORY_FILE.exists():
         try:
             with open(GAME_HISTORY_FILE, 'r') as f:
                 game_history = json.load(f)
@@ -587,64 +600,81 @@ def show_player_stats(player_name):
         add_row(d, by_diff.get(d, 0))
 
 
+def _sanitize_filename(name: str) -> str:
+    """Remove invalid filename characters from player name."""
+    if not name:
+        return "Anonymous"
+    sanitized = re.sub(r"[<>:\"/\\|?*]", "_", name)  # remove common illegal chars
+    sanitized = re.sub(r"\s+", "_", sanitized).strip("_")  # replace whitespace with underscore
+    return sanitized or "Player"
+
+
+def get_export_base_dir() -> Path:
+    """Get the export directory, preferring Documents folder for portable EXE builds."""
+    try:
+        home = Path.home()
+        docs = home / "Documents"
+        base_dir = docs / "GuessTheNumber" / "exports"
+    except Exception:
+        # Fallback to local app dir (but be careful when frozen)
+        if getattr(sys, "frozen", False):
+            base_dir = Path(sys.executable).parent / "exports"
+        else:
+            base_dir = Path(__file__).parent / "exports"
+    return base_dir
+
+
 def export_player_csv(player_name):
     """Export all game history entries for a player to a CSV file."""
-    import csv
-    from datetime import datetime
-    
     if not player_name:
-        return
-    
-    # Create exports directory if it doesn't exist
-    os.makedirs('exports', exist_ok=True)
-    
-    # Get all entries for this player from game_history
+        try:
+            messagebox.showinfo("Export", "Please select a player to export.")
+        except Exception:
+            print("Please select a player to export.")
+        return None
+
+    base_dir = get_export_base_dir()
+    base_dir.mkdir(parents=True, exist_ok=True)
+
+    # Collect entries from game_history (primary) and leaderboard (secondary)
     entries = [e for e in game_history if e.get('name') == player_name]
-    
-    # Also add leaderboard entries (they may have richer metadata)
-    # We'll use game_history as primary source, but append leaderboard entries not in game_history
     leaderboard_entries = []
     for diff, lst in leaderboards.items():
         for e in lst:
             if e.get('name') == player_name:
                 ent = e.copy()
-                ent['difficulty'] = diff
+                ent.setdefault('difficulty', diff)
                 ent.setdefault('result', 'win')
                 leaderboard_entries.append(ent)
-    
+
     if not entries and not leaderboard_entries:
-        # Show a messagebox or notification
         try:
-            from tkinter import messagebox
             messagebox.showinfo("Export", f"No data to export for {player_name}.")
         except Exception:
             print(f"No data to export for {player_name}")
         return None
-    
-    # Use game_history as primary; add leaderboard entries that aren't in game_history (by timestamp)
-    game_history_ts = {e.get('timestamp'): e for e in entries}
+
+    # Merge and deduplicate by timestamp where possible
+    seen_ts = {e.get('timestamp') for e in entries if e.get('timestamp')}
     combined = list(entries)
     for lb_e in leaderboard_entries:
-        if lb_e.get('timestamp') not in game_history_ts:
+        if lb_e.get('timestamp') not in seen_ts:
             combined.append(lb_e)
-    
-    # Sort by timestamp
+
     combined.sort(key=lambda x: x.get('timestamp', 0))
-    
-    # Generate filename
+
+    safe_name = _sanitize_filename(player_name)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f'exports/{player_name}_history_{timestamp}.csv'
-    
-    # Define CSV columns
+    filename = base_dir / f"{safe_name}_history_{timestamp}.csv"
+
     fieldnames = ['timestamp', 'date_time', 'result', 'difficulty', 'score', 'time_s', 'attempts', 'hints']
-    
+
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            
             for entry in combined:
-                ts = entry.get('timestamp', 0)
+                ts = entry.get('timestamp') or 0
                 dt_str = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S") if ts else ""
                 row = {
                     'timestamp': ts,
@@ -657,21 +687,17 @@ def export_player_csv(player_name):
                     'hints': entry.get('hints', '')
                 }
                 writer.writerow(row)
-        
-        # Show success message
+
         try:
-            from tkinter import messagebox
             messagebox.showinfo("Export Success", f"Exported {len(combined)} records to:\n{filename}")
         except Exception:
-            print(f"✓ Exported {len(combined)} records to {filename}")
-        
-        return filename
+            print(f"Exported {len(combined)} records to {filename}")
+        return str(filename)
     except Exception as e:
         try:
-            from tkinter import messagebox
             messagebox.showerror("Export Error", f"Could not export CSV: {e}")
         except Exception:
-            print(f"⚠ Could not export CSV: {e}")
+            print(f"Could not export CSV: {e}")
         return None
 
 
