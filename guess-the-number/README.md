@@ -2,7 +2,7 @@
 
 [Download Latest Version](https://github.com/oreoluwadekunle/python-tkinter-projects/releases/latest)
 
-A Python Tkinter-based number guessing game with single-player and multiplayer modes.
+A Python Tkinter-based number guessing game with single-player mode
 
 ## Features
 
@@ -14,16 +14,6 @@ A Python Tkinter-based number guessing game with single-player and multiplayer m
 - Hints system with progressive information
 - Score calculation based on attempts, hints used, and time taken
 - Leaderboard system with separate rankings for each difficulty
-
-### Multiplayer Mode
-
-- Add multiple players (minimum 2 required)
-- Turn-based gameplay where each player gets a chance to guess
-- Players are automatically cycled through until one finds the number
-- Real-time score tracking for all players
-- Scoring system: bonus points for finding the number quickly
-- Final results displayed with medal rankings (🥇 🥈 🥉)
-- Configurable game settings (number range, max attempts)
 
 ### Leaderboard
 
@@ -42,16 +32,6 @@ A Python Tkinter-based number guessing game with single-player and multiplayer m
 4. Guess numbers and use the number pad to input guesses
 5. Use hints strategically (Hint button)
 6. When you guess correctly, enter your name to save your score
-
-### Multiplayer
-
-1. Click on the "Multiplayer" tab
-2. Add player names one by one using the Player Name field
-3. (Optional) Adjust game settings (default: 1-100, 10 attempts)
-4. Click "Start Multiplayer Game"
-5. Players take turns guessing in order
-6. First player to guess the number wins!
-7. Game displays final scores with rankings
 
 ## Requirements
 
