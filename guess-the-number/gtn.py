@@ -15,12 +15,12 @@ GAME_VERSION = "1.0.0"
 REMOTE_VERSION_URL = "YOUR_RAW_TEXT_URL_HERE"
 DOWNLOAD_LINK = "YOUR_GAME_DOWNLOAD_URL_HERE"
 
-def check_for_updates(window_root):
+def check_for_updates(window):
     """Starts a thread to check for updates asynchronously."""
-    update_thread = threading.Thread(target=_fetch_version_data, args=(window_root,), daemon=True)
+    update_thread = threading.Thread(target=_fetch_version_data, args=(window,), daemon=True)
     update_thread.start()
 
-def _fetch_version_data(window_root):
+def _fetch_version_data(window):
     """Worker function to fetch data and compare versions."""
     try:
         # 1. Fetch the remote version number
@@ -31,7 +31,7 @@ def _fetch_version_data(window_root):
         # 2. Compare versions
         if remote_version and remote_version > GAME_VERSION:
             # An update is available! Schedule the notification on the main Tkinter thread.
-            window_root.after(0, lambda: _show_update_notification(remote_version))
+            window.after(0, lambda: _show_update_notification(remote_version))
 
     except requests.exceptions.RequestException as e:
         # Handle connection errors (no internet, URL down, etc.)
