@@ -14,7 +14,7 @@ import csv
 from datetime import datetime
 from pathlib import Path
 
-GAME_VERSION = "1.0.0"
+GAME_VERSION = "1.0.1"
 
 # Global constant for the check
 REMOTE_VERSION_URL = "https://raw.githubusercontent.com/oreoluwadekunle/python-tkinter-projects/refs/heads/main/latest_version.txt"
@@ -76,14 +76,12 @@ pygame.mixer.music.set_endevent(MUSIC_END_EVENT)
 
 
 try:
-    # Load the music file (must be done with mixer.music.load)
+    # Load the music file 
     pygame.mixer.music.load(PLAYLIST[current_track_index])
     
-    # Play the music. The -1 means it will loop indefinitely.
-    # The 0.0 means start playing immediately.
     pygame.mixer.music.play(0) 
     
-    # Optional: Set volume (0.0 to 1.0)
+    # Set volume (0.0 to 0.5)
     pygame.mixer.music.set_volume(0.5) 
     
     print(f"✓ Background music started.")
@@ -91,9 +89,9 @@ try:
 except pygame.error as e:
     print(f"⚠ Could not load background music: {e}")
     
-# Load the sound file (change filename if yours is different)
+# Load the sound file 
 try:
-    win_sound = pygame.mixer.Sound(sound_name)  # Change to your filename
+    win_sound = pygame.mixer.Sound(sound_name)  
     sound_loaded = True
 except:
     sound_loaded = False
@@ -133,7 +131,7 @@ attempts = 0
 max_attempts = 10  # Default max attempts
 min_range = 1  # Default minimum number
 max_range = 100  # Default maximum number
-game_over = False
+game_over = False # Track if game has ended
 game_started = False  # Track if game has started
 hints_used = 0 # Track number of hints used
 guess_history=[]
@@ -165,6 +163,7 @@ LEADERBOARD_FILE = SCRIPT_DIR / "leaderboard.json"
 current_streak = 0
 best_streak = 0
 STREAK_FILE = SCRIPT_DIR / "streak.json"
+
 # Game history (records every finished game)
 GAME_HISTORY_FILE = SCRIPT_DIR / "game_history.json"
 game_history = []
@@ -1333,7 +1332,7 @@ def ask_player_name(difficulty):
 
 
 def check_guess():
-    global current_input, attempts, game_over, guess_history, current_streak, best_streak
+    global current_input, attempts, game_over, guess_history, current_streak, best_streak, guessed_after_hint
 
     # Don't allow checking if game hasn't started or is over
     if not game_started or game_over:
@@ -1359,6 +1358,7 @@ def check_guess():
     # Increment attempts
     attempts += 1
     attempts_label.config(text=f"Attempts: {attempts}/{max_attempts} | Hints: {hints_used}")
+    guessed_after_hint = True
 
     # Calculate how far off the guess is (for visual feedback)
     difference = abs(guess - secret_number)
