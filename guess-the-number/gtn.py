@@ -18,7 +18,7 @@ GAME_VERSION = "1.0.1"
 
 # Global constant for the check
 REMOTE_VERSION_URL = "https://raw.githubusercontent.com/oreoluwadekunle/python-tkinter-projects/refs/heads/main/latest_version.txt"
-DOWNLOAD_LINK = "YOUR_GAME_DOWNLOAD_URL_HERE"
+DOWNLOAD_LINK = "https://github.com/oreoluwadekunle/python-tkinter-projects/releases/latest"
 
 def check_for_updates(window):
     """Starts a thread to check for updates asynchronously."""
